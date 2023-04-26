@@ -1,0 +1,67 @@
+---
+title: "DA LM"
+output: html
+
+execute: 
+  echo: false
+  warning: false
+  message: false
+
+---
+
+
+# Data Analytics Quarto Assignment
+## Using Unicef data
+
+
+
+```{r}
+#| label: setup
+#| include: false
+
+options(scipen = 999)
+install.packages('tidyverse')
+library(tidyverse)
+unicef_indicator_1 <- read.csv("/cloud/project/unicef_indicator_1.csv")
+unicef_metadata <- read.csv("/cloud/project/unicef_metadata .csv")
+```
+## Scatterplot with a linear regression line and time series displaying the increasing life expectancy in Angola (1960-2021)
+The life expectancy in Angola, the selected high risk region for examination, the data indicates that in line with the increasing uptake of yellow fever vaccine, **life expectancy is rising**. This suggests that the yellow fever vaccine is **decreasing** *infant mortaility*.
+```{r}
+colnames(unicef_metadata)[11] ="LifeExp"
+colnames(unicef_metadata)[8] ="GDP_per_capita"
+colnames(unicef_metadata)[7] = "Pop_total" 
+unicef_Angola <- filter(unicef_metadata, country == 'Angola')
+ggplot(unicef_Angola) + aes(x = year, y = LifeExp) + geom_point(color = 'red') + labs(
+  x = "Year (from 1960 -2021)",
+  y = "Life Expectancy",
+  title = substitute(paste(bold("Evolution of Angola's Life Expectancy from 1960 to 2021.")))
+) + geom_smooth() + theme_classic()
+```
+## Scatterplot illustrating the correlation between yellow fever vaccine, life expectancy and GDP per capita.
+Scatterplot demonstrating the relationship between the the yellow fever vaccine, higher GDP per capita and life expectancy. As people are experincing an increase in life expectancy this creates **high per capita income** and thus **sustained economic growth**.
+```{r}
+ggplot(data = unicef_metadata) + aes(x = GDP_per_capita, y = LifeExp, color = country) +labs(x = "GDP per capita", y = "Life Expectancy", title = "Life Expectancy vs GDP per capita") + geom_point() + guides(color = "none")
+```
+## A World Map Chart Containing a Indicator Scale
+A world map chart. Key indicator: Green = *countries with high yellow fever vaccine uptake* and therefore **high YF infant immunisation**
+Red = countries with *low yellow fever vaccine uptake* and thus **YF low infant immunisation**.
+```{r}
+install.packages("maps")
+vaccine_2021 <- unicef_indicator_1 %>%
+  filter(time_period == 2021)
+map_world <- map_data("world")
+map_vaccine_2021 <- full_join(map_world, vaccine_2021, by = c("region" = "country"))
+ggplot(data = map_vaccine_2021) + aes( x = long, y = lat, group = group, fill = obs_value) + geom_polygon() + scale_fill_gradient(low = "red", high = "green", na.value = "grey") + labs(
+  title = substitute(paste(bold("Differences between countries regarding yellow flu vaccine uptake rates."))),
+  subtitle = substitute(paste(italic("Countries in grey have had a mismatch with their names hence have no data."))),
+  x = "Longitude",
+  y = "Latitude",
+  fill = "% Vaccine uptake"
+) + theme_classic()
+```
+## A Bar Chart Repersenting Infant Yellow Fever Immunisation in High Risk Countries.
+The data highlights that generally there is an **increase** in yellow fever vaccine uptake in the total infant population in *high risk countries* and therefore a rise in infant yellow fever immunisation.
+```{r}
+ggplot(data = unicef_indicator_1) + aes(x = time_period, y = obs_value) + geom_col() + labs(y = "Infant Immunisation", x = "Time Period", title = "Increase in Infant Immunisation over two decades.")
+```
